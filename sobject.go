@@ -130,6 +130,7 @@ func (obj *SObject) Create() *SObject {
 	respData, httpErr := obj.client().httpRequest(http.MethodPost, url, bytes.NewReader(reqData))
 	if httpErr != nil {
 		log.Println(logPrefix, "failed to process http request,", err)
+		obj.setError(string(respData))
 		println(respData)
 		return nil
 	}
@@ -150,10 +151,6 @@ func (obj *SObject) Create() *SObject {
 	if !respVal.Success || respVal.ID == "" {
 		log.Println(logPrefix, "unsuccessful")
 		return nil
-	}
-
-	if httpErr != nil {
-		obj.setError(respData)
 	}
 
 	obj.setID(respVal.ID)
