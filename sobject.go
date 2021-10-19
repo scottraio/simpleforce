@@ -127,8 +127,8 @@ func (obj *SObject) Create() *SObject {
 	}
 
 	url := obj.client().makeURL("sobjects/" + obj.Type() + "/")
-	respData, err := obj.client().httpRequest(http.MethodPost, url, bytes.NewReader(reqData))
-	if err != nil {
+	respData, httpErr := obj.client().httpRequest(http.MethodPost, url, bytes.NewReader(reqData))
+	if httpErr != nil {
 		log.Println(logPrefix, "failed to process http request,", err)
 		println(respData)
 		return nil
@@ -139,6 +139,7 @@ func (obj *SObject) Create() *SObject {
 	var respVal struct {
 		ID      string `json:"id"`
 		Success bool   `json:"success"`
+		Message string `json:"message"`
 	}
 	err = json.Unmarshal(respData, &respVal)
 	if err != nil {
@@ -149,6 +150,10 @@ func (obj *SObject) Create() *SObject {
 	if !respVal.Success || respVal.ID == "" {
 		log.Println(logPrefix, "unsuccessful")
 		return nil
+	}
+
+	if httpErr != nil {
+		obj.setError(respVal.Message)
 	}
 
 	obj.setID(respVal.ID)
