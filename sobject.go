@@ -111,10 +111,10 @@ func (obj *SObject) Get(id ...string) *SObject {
 // If the creation is successful, the ID of the SObject instance is updated with the ID returned. Otherwise, nil is
 // returned for failures.
 // Ref: https://developer.salesforce.com/docs/atlas.en-us.214.0.api_rest.meta/api_rest/dome_sobject_create.htm
-func (obj *SObject) Create() *SObject {
+func (obj *SObject) Create() (*SObject, error, []byte) {
 	if obj.Type() == "" || obj.client() == nil {
 		// Sanity check.
-		return nil
+		return nil, nil, nil
 	}
 
 	// Make a copy of the incoming SObject, but skip certain metadata fields as they're not understood by salesforce.
@@ -122,14 +122,12 @@ func (obj *SObject) Create() *SObject {
 	reqData, err := json.Marshal(reqObj)
 	if err != nil {
 		log.Println(logPrefix, "failed to convert sobject to json,", err)
-		return nil
 	}
 
 	url := obj.client().makeURL("sobjects/" + obj.Type() + "/")
 	respData, err := obj.client().httpRequest(http.MethodPost, url, bytes.NewReader(reqData))
 	if err != nil {
 		log.Println(logPrefix, "failed to process http request,", err)
-		return nil
 	}
 
 	// Use an anonymous struct to parse the result if any. This might need to be changed if the result should
@@ -141,16 +139,14 @@ func (obj *SObject) Create() *SObject {
 	err = json.Unmarshal(respData, &respVal)
 	if err != nil {
 		log.Println(logPrefix, "failed to process response data,", err)
-		return nil
 	}
 
 	if !respVal.Success || respVal.ID == "" {
 		log.Println(logPrefix, "unsuccessful")
-		return nil
 	}
 
 	obj.setID(respVal.ID)
-	return obj
+	return obj, err, respData
 }
 
 // Update updates SObject in place. Upon successful, same SObject is returned for chained access.
