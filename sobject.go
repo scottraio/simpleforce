@@ -153,7 +153,7 @@ func (obj *SObject) Create() *SObject {
 	}
 
 	if httpErr != nil {
-		obj.setError(respVal.Message)
+		obj.setError(respData)
 	}
 
 	obj.setID(respVal.ID)
