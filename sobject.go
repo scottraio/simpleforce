@@ -356,12 +356,12 @@ func (obj *SObject) setType(typeName string) {
 }
 
 // setType sets the type, or name for the SObject.
-func (obj *SObject) setError(err error) {
+func (obj *SObject) setError(err string) {
 	attributes := obj.InterfaceField(sobjectAttributesKey)
 	switch attributes.(type) {
 	case SObjectAttributes:
 		attrs := obj.AttributesField()
-		attrs.Type = typeName
+		attrs.Error = err
 		(*obj)[sobjectAttributesKey] = *attrs
 	default:
 		(*obj)[sobjectAttributesKey] = SObjectAttributes{
