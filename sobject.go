@@ -130,7 +130,7 @@ func (obj *SObject) Create() *SObject {
 	url := obj.client().makeURL("sobjects/" + obj.Type() + "/")
 	respData, httpErr := obj.client().httpRequest(http.MethodPost, url, bytes.NewReader(reqData))
 	if httpErr != nil {
-		log.Println(logPrefix, "failed to process http request,", httpErr)
+		// log.Println(logPrefix, "failed to process http request,", httpErr)
 		bodyError := fmt.Sprintf("%s", httpErr)
 		obj.setError(bodyError)
 		return nil
