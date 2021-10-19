@@ -50,7 +50,7 @@ type QueryResult struct {
 
 // Expose sid to save in admin settings
 func (client *Client) GetSid() (sid string) {
-        return client.sessionID
+	return client.sessionID
 }
 
 //Expose Loc to save in admin settings
@@ -60,8 +60,8 @@ func (client *Client) GetLoc() (loc string) {
 
 // Set SID and Loc as a means to log in without LoginPassword
 func (client *Client) SetSidLoc(sid string, loc string) {
-        client.sessionID = sid
-        client.instanceURL = loc
+	client.sessionID = sid
+	client.instanceURL = loc
 }
 
 // Query runs an SOQL query. q could either be the SOQL string or the nextRecordsURL.
@@ -182,11 +182,11 @@ func (client *Client) LoginPassword(username, password, token string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Println(logPrefix, "request failed,", resp.StatusCode)
+		//log.Println(logPrefix, "request failed,", resp.StatusCode)
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
-		newStr := buf.String()
-		log.Println(logPrefix, "Failed resp.body: ", newStr)
+		//newStr := buf.String()
+		//log.Println(logPrefix, "Failed resp.body: ", newStr)
 		theError := ParseSalesforceError(resp.StatusCode, buf.Bytes())
 		return theError
 	}
