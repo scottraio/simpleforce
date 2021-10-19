@@ -3,6 +3,7 @@ package simpleforce
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -130,8 +131,8 @@ func (obj *SObject) Create() *SObject {
 	respData, httpErr := obj.client().httpRequest(http.MethodPost, url, bytes.NewReader(reqData))
 	if httpErr != nil {
 		log.Println(logPrefix, "failed to process http request,", err)
-		obj.setError(string(respData))
-		println(respData)
+		bodyError := fmt.Sprintf("%s", err)
+		obj.setError(bodyError)
 		return nil
 	}
 

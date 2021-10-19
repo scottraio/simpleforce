@@ -37,6 +37,18 @@ func TestSObject_Type(t *testing.T) {
 	}
 }
 
+func TestSObject_Error(t *testing.T) {
+	obj := &SObject{
+		sobjectAttributesKey: SObjectAttributes{Type: "Case"},
+	}
+
+	obj.setError("FAIL")
+
+	if obj.Error() != "FAIL" {
+		t.Fail()
+	}
+}
+
 func TestSObject_InterfaceField(t *testing.T) {
 	obj := &SObject{}
 	if obj.InterfaceField("test_key") != nil {
