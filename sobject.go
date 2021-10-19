@@ -226,6 +226,15 @@ func (obj *SObject) Type() string {
 	return attributes.Type
 }
 
+// Type returns the type, or sometimes referred to as name, of an SObject.
+func (obj *SObject) Error() string {
+	attributes := obj.AttributesField()
+	if attributes == nil {
+		return ""
+	}
+	return attributes.Error
+}
+
 // ID returns the external ID of the SObject.
 func (obj *SObject) ID() string {
 	return obj.StringField(sobjectIDKey)
