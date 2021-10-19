@@ -46,8 +46,9 @@ type SObjectMeta map[string]interface{}
 
 // SObjectAttributes describes the basic attributes (type and url) of an SObject.
 type SObjectAttributes struct {
-	Type string `json:"type"`
-	URL  string `json:"url"`
+	Type  string `json:"type"`
+	URL   string `json:"url"`
+	Error string `json:"error"`
 }
 
 // Describe queries the metadata of an SObject using the "describe" API.
@@ -129,6 +130,7 @@ func (obj *SObject) Create() *SObject {
 	respData, err := obj.client().httpRequest(http.MethodPost, url, bytes.NewReader(reqData))
 	if err != nil {
 		log.Println(logPrefix, "failed to process http request,", err)
+		println(respData)
 		return nil
 	}
 
@@ -349,6 +351,21 @@ func (obj *SObject) setType(typeName string) {
 	default:
 		(*obj)[sobjectAttributesKey] = SObjectAttributes{
 			Type: typeName,
+		}
+	}
+}
+
+// setType sets the type, or name for the SObject.
+func (obj *SObject) setError(err error) {
+	attributes := obj.InterfaceField(sobjectAttributesKey)
+	switch attributes.(type) {
+	case SObjectAttributes:
+		attrs := obj.AttributesField()
+		attrs.Type = typeName
+		(*obj)[sobjectAttributesKey] = *attrs
+	default:
+		(*obj)[sobjectAttributesKey] = SObjectAttributes{
+			Error: err,
 		}
 	}
 }
