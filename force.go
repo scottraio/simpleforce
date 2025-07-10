@@ -2,6 +2,7 @@ package simpleforce
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -321,6 +323,90 @@ func NewClient(url, clientID, apiVersion string) *Client {
 
 func (client *Client) SetHttpClient(c *http.Client) {
 	client.httpClient = c
+}
+
+/*
+UploadFileToContentVersion uploads a file to Salesforce as a ContentVersion and relates it to a parent record.
+
+Parameters:
+  - filePath: Local path to the file to upload.
+  - parentRecordID: Salesforce record ID to relate the file to (FirstPublishLocationId).
+  - opts: Optional functional options (e.g., WithTitle, WithDescription).
+
+Returns:
+  - contentVersionID: The ID of the created ContentVersion.
+  - contentDocumentID: The ID of the related ContentDocument.
+  - err: Error, if any.
+
+Example:
+
+	contentVersionID, contentDocumentID, err := client.UploadFileToContentVersion(
+		"/path/to/file.pdf",
+		"001XXXXXXXXXXXXXXX",
+		WithTitle("My File"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Uploaded ContentVersion ID:", contentVersionID)
+	fmt.Println("ContentDocument ID:", contentDocumentID)
+*/
+func (client *Client) UploadFileToContentVersion(
+	filePath string,
+	parentRecordID string,
+	opts ...UploadOption,
+) (contentVersionID string, contentDocumentID string, err error) {
+	// Read file
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to read file: %w", err)
+	}
+	encoded := base64.StdEncoding.EncodeToString(data)
+	fileName := filepath.Base(filePath)
+
+	// Build ContentVersion SObject
+	cv := client.SObject("ContentVersion").
+		Set("PathOnClient", fileName).
+		Set("VersionData", encoded).
+		Set("FirstPublishLocationId", parentRecordID)
+
+	// Apply options
+	for _, opt := range opts {
+		opt(cv)
+	}
+
+	// Create ContentVersion
+	result := cv.Create()
+	if result == nil || result.ID() == "" {
+		return "", "", fmt.Errorf("failed to create ContentVersion")
+	}
+	contentVersionID = result.ID()
+
+	// Query for ContentDocumentId
+	q := fmt.Sprintf("SELECT ContentDocumentId FROM ContentVersion WHERE Id = '%s'", contentVersionID)
+	qr, err := client.Query(q)
+	if err != nil || len(qr.Records) == 0 {
+		return contentVersionID, "", fmt.Errorf("file uploaded, but failed to retrieve ContentDocumentId: %w", err)
+	}
+	contentDocumentID = qr.Records[0].StringField("ContentDocumentId")
+	return contentVersionID, contentDocumentID, nil
+}
+
+// UploadOption is a functional option for UploadFileToContentVersion.
+type UploadOption func(*SObject)
+
+// WithTitle sets the Title field for the uploaded file.
+func WithTitle(title string) UploadOption {
+	return func(obj *SObject) {
+		obj.Set("Title", title)
+	}
+}
+
+// WithDescription sets the Description field for the uploaded file.
+func WithDescription(desc string) UploadOption {
+	return func(obj *SObject) {
+		obj.Set("Description", desc)
+	}
 }
 
 // DownloadFile downloads a file based on the REST API path given. Saves to filePath.

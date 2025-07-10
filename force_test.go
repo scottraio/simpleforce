@@ -176,6 +176,49 @@ func TestClient_QueryLike(t *testing.T) {
 	}
 }
 
+func TestClient_UploadFileToContentVersion(t *testing.T) {
+	client := requireClient(t, true)
+
+	// Create a temporary file
+	tmpFile, err := os.CreateTemp("", "simpleforce_testfile_*.txt")
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+	content := []byte("This is a test file for Salesforce upload.")
+	if _, err := tmpFile.Write(content); err != nil {
+		t.Fatalf("failed to write to temp file: %v", err)
+	}
+	tmpFile.Close()
+
+	// Use a valid Salesforce record ID for FirstPublishLocationId (replace with a real one for integration)
+	// For test purposes, we use an invalid ID to check error handling
+	invalidParentID := "001INVALIDID"
+	_, _, err = client.UploadFileToContentVersion(tmpFile.Name(), invalidParentID)
+	if err == nil {
+		t.Error("expected error for invalid parent ID, got nil")
+	}
+
+	// Skip actual upload if no valid parent ID is available
+	validParentID := os.Getenv("SF_TEST_PARENT_ID")
+	if validParentID == "" {
+		t.Skip("SF_TEST_PARENT_ID not set; skipping real upload test")
+	}
+
+	cvID, cdID, err := client.UploadFileToContentVersion(
+		tmpFile.Name(),
+		validParentID,
+		WithTitle("Test File"),
+		WithDescription("Uploaded by simpleforce test"),
+	)
+	if err != nil {
+		t.Fatalf("upload failed: %v", err)
+	}
+	if cvID == "" || cdID == "" {
+		t.Errorf("expected non-empty IDs, got cvID=%q, cdID=%q", cvID, cdID)
+	}
+}
+
 func TestMain(m *testing.M) {
 	m.Run()
 }
