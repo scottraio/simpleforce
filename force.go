@@ -420,6 +420,26 @@ func (client *Client) DownloadAttachment(attachmentId string, filepath string) e
 	return client.download(apiPath, filepath)
 }
 
+// DownloadLegacyFile downloads a legacy Salesforce Attachment (pre-ContentVersion) by its ID and saves it to the specified local path.
+//
+// Parameters:
+//   - attachmentID: The Salesforce Attachment record ID (legacy file).
+//   - filepath: The local filesystem path to save the downloaded file.
+//
+// Returns:
+//   - error: Non-nil if the download or file write fails.
+//
+// Example:
+//
+//	err := client.DownloadLegacyFile("00PXXXXXXXXXXXX", "/tmp/legacyfile.pdf")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+func (client *Client) DownloadLegacyFile(attachmentID string, filepath string) error {
+	apiPath := fmt.Sprintf("/services/data/v%s/sobjects/Attachment/%s/Body", client.apiVersion, attachmentID)
+	return client.download(apiPath, filepath)
+}
+
 func (client *Client) download(apiPath string, filepath string) error {
 	// Get the data
 	httpClient := client.httpClient

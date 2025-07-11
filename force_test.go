@@ -219,6 +219,53 @@ func TestClient_UploadFileToContentVersion(t *testing.T) {
 	}
 }
 
+func TestClient_DownloadLegacyFile(t *testing.T) {
+	client := requireClient(t, true)
+
+	// Test with an invalid Attachment ID (should error)
+	invalidAttachmentID := "00PINVALIDID"
+	tmpFile, err := os.CreateTemp("", "simpleforce_legacyfile_*.bin")
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	tmpFilePath := tmpFile.Name()
+	tmpFile.Close()
+	defer os.Remove(tmpFilePath)
+
+	err = client.DownloadLegacyFile(invalidAttachmentID, tmpFilePath)
+	if err == nil {
+		t.Error("expected error for invalid attachment ID, got nil")
+	}
+
+	// Test with a valid Attachment ID if provided
+	validAttachmentID := os.Getenv("SF_TEST_ATTACHMENT_ID")
+	if validAttachmentID == "" {
+		t.Skip("SF_TEST_ATTACHMENT_ID not set; skipping real legacy file download test")
+	}
+
+	realTmpFile, err := os.CreateTemp("", "simpleforce_legacyfile_real_*.bin")
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	realTmpFilePath := realTmpFile.Name()
+	realTmpFile.Close()
+	defer os.Remove(realTmpFilePath)
+
+	err = client.DownloadLegacyFile(validAttachmentID, realTmpFilePath)
+	if err != nil {
+		t.Fatalf("download failed: %v", err)
+	}
+
+	// Check that the file exists and is non-empty
+	info, err := os.Stat(realTmpFilePath)
+	if err != nil {
+		t.Fatalf("downloaded file not found: %v", err)
+	}
+	if info.Size() == 0 {
+		t.Error("downloaded file is empty")
+	}
+}
+
 func TestMain(m *testing.M) {
 	m.Run()
 }
